@@ -1,9 +1,9 @@
 import os
 import platform
 import sqlite3
-import xlsxwriter
+import xlsxwriter # type: ignore
 import datetime
-import pytz 
+import pytz # type: ignore
 
 def get_browser_cookie_path(browser_name):
     # Dictionary mapping browser names to their cookie file paths

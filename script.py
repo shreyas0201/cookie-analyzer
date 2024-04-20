@@ -1,6 +1,9 @@
 import os
 import platform
 import sqlite3
+import xlsxwriter
+import datetime
+import pytz 
 
 def get_browser_cookie_path(browser_name):
     # Dictionary mapping browser names to their cookie file paths
@@ -8,12 +11,17 @@ def get_browser_cookie_path(browser_name):
     'Chrome': {
         'Windows': os.path.join(os.getenv('LOCALAPPDATA'), 'Google','Chrome','User Data','Profile 1','Network', 'Cookies'),
     },
-    'Firefox': {
-        'Windows': os.path.join(os.getenv('APPDATA'), 'Mozilla', 'Firefox', 'Profiles', 'default', 'cookies.sqlite'),
-        'Linux': os.path.expanduser('~/.mozilla/firefox/*.default/cookies.sqlite'),
-        'Darwin': os.path.expanduser('~/.mozilla/firefox/*.default/cookies.sqlite')
+    'Brave': {
+            'Windows': os.path.join(os.getenv('LOCALAPPDATA'), 'BraveSoftware','Brave-Browser','User Data','Default','Network','Cookies'),
+            'Linux': os.path.expanduser('~/.config/BraveSoftware/Brave-Browser/Default/Cookies'),
+            'Darwin': os.path.expanduser('~/Library/Application Support/BraveSoftware/Brave-Browser/Default/Cookies')
     },
     # Add more browsers and their paths as needed
+    # 'Firefox': {
+    #     'Windows': os.path.join(os.getenv('APPDATA'), 'Mozilla', 'Firefox', 'Profiles', 'default', 'cookies.sqlite'),
+    #     'Linux': os.path.expanduser('~/.mozilla/firefox/*.default/cookies.sqlite'),
+    #     'Darwin': os.path.expanduser('~/.mozilla/firefox/*.default/cookies.sqlite')
+    # },
     }
 
 
@@ -24,6 +32,11 @@ def get_browser_cookie_path(browser_name):
 
     print("Unsupported browser or operating system")
     return None
+
+def convert_unix_timestamp(timestamp_microseconds):
+    timestamp_seconds = timestamp_microseconds // 1000000  # Convert microseconds to seconds
+    dt = datetime.datetime.fromtimestamp(timestamp_seconds, datetime.timezone.utc)
+    return dt.strftime('%Y-%m-%d %H:%M:%S')
 
 def analyze_browser_cookies(browser_name):
     # Get the cookie file path for the specified browser
@@ -56,22 +69,50 @@ def analyze_browser_cookies(browser_name):
         conn.close()
         return
 
-    # Print out the cookie information
-    print("Found {} cookies in the {} browser:".format(len(cookies), browser_name))
-    for cookie in cookies:
-        name, value, host, path, expires, is_secure = cookie
-        print("Name:", name)
-        print("Value:", value)
-        print("Host:", host)
-        print("Path:", path)
-        print("Expires:", expires)
-        print("Secure:", bool(is_secure))
-        print("-" * 30)
+    # # Print out the cookie information
+    # print("Found {} cookies in the {} browser:".format(len(cookies), browser_name))
+    # for cookie in cookies:
+    #     name, value, host, path, expires, is_secure = cookie
+    #     print("Name:", name)
+    #     print("Value:", value)
+    #     print("Host:", host)
+    #     print("Path:", path)
+    #     print("Expires:", expires)
+    #     print("Secure:", bool(is_secure))
+    #     print("-" * 30)
+
+    # Create an Excel workbook and worksheet
+    #workbook = xlsxwriter.Workbook('E:\projects\gtihub up\cookies analyzer\Report.xlsx')
+    workbook = xlsxwriter.Workbook(f'E:\projects\gtihub up\cookies analyzer\Report_{browser_name}.xlsx')
+    worksheet = workbook.add_worksheet()
+
+    # Write headers to the worksheet
+    headers = ['Name', 'Value', 'Host', 'Path', 'Expires', 'Secure']
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header)
+
+    # Write cookie data to the worksheet
+    for row, cookie in enumerate(cookies, start=1):
+        for col, data in enumerate(cookie):
+            for col, data in enumerate(cookie):
+                if col == 4:  # Convert Unix timestamp to human-readable format for 'expires_utc' column
+                    worksheet.write(row, col, convert_unix_timestamp(data))
+                else:
+                    worksheet.write(row, col, str(data))
+
+    # Close the workbook
+    workbook.close()
+
+    #print("Cookie data exported to 'Report.xlsx'")
+    print(f"Cookie data for {browser_name} exported to 'Report_{browser_name}.xlsx'")
 
     # Close the database connection
     conn.close()
 
 if __name__ == "__main__":
     print("Starting browser cookie analysis tool...")
-    browser_name = input("Enter the name of the browser (e.g., Firefox, Chrome): ").strip()
-    analyze_browser_cookies(browser_name)
+    #analyze_browser_cookies(browser_name)
+    #browser_name = input("Enter the name of the browser (e.g., Firefox, Chrome): ").strip()
+    browsers = input("Enter the names of the browsers separated by commas (e.g., Brave, Chrome): ").strip().split(',')
+    for browser in browsers:
+        analyze_browser_cookies(browser.strip())

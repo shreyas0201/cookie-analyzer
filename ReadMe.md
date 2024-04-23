@@ -35,7 +35,7 @@ The Browser Cookie Analyzer is a Python script that analyzes and reports on brow
 3. The script will generate Excel files named `Report_Browser_Profile.xlsx` containing the analyzed cookie data.
 
 ## Example
-*>>*python script.py
+python script.py
 Starting browser cookie analysis tool...
 Enter the names of the browsers separated by commas (e.g., Brave, Chrome): Chrome, Brave
 Cookie data for Chrome (Default) exported to 'Report_Chrome_Default.xlsx'
